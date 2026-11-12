@@ -201,8 +201,10 @@ jobs:
       - name: Push container
         uses: docker/build-push-action@v7
         # Containers can't be pushed during PRs because of the way permissions
-        # are delegated to secrets.GITHUB_TOKEN
-        if: ${{ needs.determine_docker_version.outputs.build_docker_containers == 'true' && github.event_name != 'pull_request' }}
+        # are delegated to secrets.GITHUB_TOKEN.
+        # Push whenever this container was rebuilt, so a change to a single
+        # Dockerfile doesn't leave a stale image in the registry.
+        if: ${{ (needs.determine_docker_version.outputs[format('build_{0}_containers', matrix.os)] == 'true' || needs.determine_docker_version.outputs.build_docker_containers == 'true') && github.event_name != 'pull_request' }}
         with:
           context: docker/
           file: ./docker/Dockerfile.${{ matrix.os }}
